@@ -7,12 +7,6 @@ defmodule Shopircruit.Gateway do
     @endpoint
   end
 
-  @max_retry 10
-
-  def max_retry do
-    @max_retry
-  end
-
   defp process_url(url) do
     case url |> String.slice(0, 8) |> String.downcase do
       "http://" <> _ -> super url
