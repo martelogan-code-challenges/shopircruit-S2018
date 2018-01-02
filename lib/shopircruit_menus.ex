@@ -49,16 +49,16 @@ defmodule Shopircruit.Menus do
   # process raw json of menus list for a single page of API
   defp process_raw_menus_page(raw_menus_list) do
     raw_menus_list
-    |> Enum.reduce(%{}, fn(menu, mapped_menus_page) ->
-        menu_id = menu["id"]
-        new_children = menu["child_ids"]
+    |> Enum.reduce(%{}, fn(node, mapped_menus_page) ->
+        node_id = node["id"]
+        new_children = node["child_ids"]
         # assumption: (parent_id == nil) => root
-        case menu["parent_id"] do
-          nil -> Map.put_new(mapped_menus_page, menu_id, %{root_id: menu_id, parent_id: nil, children: new_children})
+        case node["parent_id"] do
+          nil -> Map.put_new(mapped_menus_page, node_id, %{root_id: node_id, parent_id: nil, children: new_children})
           parent_id ->
             case Map.get(mapped_menus_page, parent_id) do
               nil ->
-                Map.put_new(mapped_menus_page, menu_id, %{root_id: nil, parent_id: nil, children: new_children})
+                Map.put_new(mapped_menus_page, node_id, %{root_id: nil, parent_id: nil, children: new_children})
               %{root_id: root_id, parent_id: grandparent, children: prev_children} ->
                 map_data = %{root_id: root_id, parent_id: grandparent, children: prev_children ++ new_children}
                 Map.update!(mapped_menus_page, parent_id, fn _val -> map_data end )
@@ -77,40 +77,26 @@ defmodule Shopircruit.Menus do
     %{root_id: root, parent_id: parent, children: children}
   end
 
-  # helper function to find root of a key in our merged data map
-  defp find_root_of_key(map, keys, target_key) do
-    case keys do
-      [hd | tl] -> 
-        %{root_id: root, parent_id: _parent, children: children} = Map.get(map, hd)
-        case children do
-          nil -> find_root_of_key(map, tl, target_key)
-          _ -> 
-            if Enum.member?(children, target_key) do
-              if root == nil do
-                find_root_of_key(map, Map.keys(map), hd)
-              else 
-                root
-              end
-            else
-              find_root_of_key(map, tl, target_key)
-            end
-        end
-    end
-  end
-
   # reduce adapted map to convey target data
   defp reduce_merged_data(merged_menus_map) do
     keys = Map.keys(merged_menus_map)
     
-    Enum.reduce(keys, %{}, fn(cur_key, result_map) ->
+    # construct result_map in O(n) by tracking roots and growing children for each encountered node
+    Enum.reduce(keys, {%{}, %{}}, fn(cur_key, {result_map, node_to_root_map}) ->
         %{root_id: root, parent_id: _parent, children: children} = Map.get(merged_menus_map, cur_key)
         if (root == cur_key) do
-          Map.put_new(result_map, root, children)
+          result_map = Map.put_new(result_map, root, children)
+          node_to_root_map = Map.put_new(node_to_root_map, root, root)
+          node_to_root_map = children |> Enum.reduce(node_to_root_map, fn child_id, acc -> Map.put(acc, child_id, root) end)
+          {result_map, node_to_root_map}
         else
-          root = if (root == nil), do: find_root_of_key(merged_menus_map, keys, cur_key), else: root
-          Map.update(result_map, root, children, fn prev_children -> prev_children ++ children end)
+          root = if (root == nil), do: Map.get(node_to_root_map, cur_key), else: root
+          result_map = Map.update(result_map, root, children, fn prev_children -> prev_children ++ children end)
+          node_to_root_map = children |> Enum.reduce(node_to_root_map, fn child_id, acc -> Map.put(acc, child_id, root) end)
+          {result_map, node_to_root_map}
         end
       end)
+    |> elem(0)
   end
 
   # check if menus tree contains cycle (*root must initially be in previously_seen_ids*)
