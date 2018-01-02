@@ -5,6 +5,7 @@ defmodule Shopircruit.Mixfile do
     [app: :shopircruit,
      version: "0.0.1",
      elixir: "~> 1.5.2",
+     escript: [main_module: Commandline.CLI],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
