@@ -1,3 +1,6 @@
+# description: encapsulating module for solution logic
+# assumption(s): no requirement on sortedness of json layers
+# use: generate raw json string of solution format
 defmodule Shopircruit.Menus do  
   alias Shopircruit.Gateway
   alias Shopircruit.Parallel

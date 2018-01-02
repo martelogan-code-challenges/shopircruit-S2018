@@ -1,3 +1,4 @@
+# interface for challenge-related API requests
 defmodule Shopircruit.Gateway do
   use HTTPoison.Base
 

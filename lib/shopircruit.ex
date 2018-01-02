@@ -1,3 +1,4 @@
+# thin client to interface with challenge API
 defmodule Shopircruit do
   alias Shopircruit.Menus
 
