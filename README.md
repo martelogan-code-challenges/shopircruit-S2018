@@ -26,3 +26,12 @@ You should now be able to execute the application via:
        ./shopircruit -c <challenge_id>
 
 where _<challenge_id>_ here would be either 1 or 2 based on the Problem/API specifications given.
+
+License
+-------
+
+This code is under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+If you use or modify _shopircruit-S2018_, please credit the original author as
+
+* Logan Martel - https://github.com/martelogan
